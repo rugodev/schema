@@ -32,7 +32,7 @@ export const FINAL_KEYWORDS = [
   'then',
   'propertyNames',
   'minProperties',
-  'maxProperties',
+  'maxProperties'
 ];
 
 export const FINAL_TYPES = [
@@ -41,14 +41,14 @@ export const FINAL_TYPES = [
   'object',
   'array',
   'boolean',
-  'null',
+  'null'
 ];
 
 export const FINAL_TRANSFORMS = [
-  [{type: 'string'}, { type: 'string', maxLength: 60 }],
-  [{type: 'text'}, { type: 'string' }],
-  [{type: 'code'}, { type: 'string' }],
-  [{type: 'relation'}, { type: 'string' }],
-  [{type: 'file'}, { type: 'string' }],
-  [{type: 'json'}, { type: 'object', properties: {} }],
+  [{ type: 'string' }, { type: 'string', maxLength: 60 }],
+  [{ type: 'text' }, { type: 'string' }],
+  [{ type: 'code' }, { type: 'string' }],
+  [{ type: 'relation' }, { type: 'string' }],
+  [{ type: 'file' }, { type: 'string' }],
+  [{ type: 'json' }, { type: 'object', properties: {} }]
 ];
