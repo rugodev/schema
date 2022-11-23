@@ -1,0 +1,30 @@
+{
+  "name": "@rugo-vn/schema",
+  "version": "1.0.0",
+  "description": "Validate and format data.",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "lint:check": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint": "npm run lint:fix",
+    "test": "mocha",
+    "coverage": "c8 npm run test"
+  },
+  "devDependencies": {
+    "c8": "^7.11.2",
+    "dotenv": "^16.0.1",
+    "eslint": "^8.14.0",
+    "eslint-config-standard": "^17.0.0",
+    "mocha": "^10.0.0"
+  },
+  "dependencies": {
+    "@rugo-vn/exception": "../exception",
+    "ajv": "^8.11.0",
+    "ajv-formats": "^2.1.1",
+    "ramda": "^0.28.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT"
+}
