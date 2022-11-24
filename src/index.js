@@ -1,7 +1,7 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { clone } from 'ramda';
-import { FINAL_KEYWORDS, FINAL_TRANSFORMS, FINAL_TYPES } from './constants.js';
+import { clone, curry, flatten, mergeDeepLeft } from 'ramda';
+import { DEFAULT_TEMPLATES, FINAL_KEYWORDS, FINAL_TRANSFORMS, FINAL_TYPES } from './constants.js';
 import { ajvError } from '@rugo-vn/exception';
 
 const EmptyFn = () => {};
@@ -11,6 +11,8 @@ const isSchemaObject = function (schema) {
 };
 
 const transformKeyword = function (keyword, value) {
+  if (keyword[0] === '_') { return undefined; }
+
   if (keyword === 'properties') {
     return {
       type: 'object',
@@ -71,14 +73,28 @@ const walk = function (schema, fn = EmptyFn, traces = []) {
     }
 
     if (nextSchemaPart !== undefined) {
-      nextSchema = {
-        ...nextSchema,
-        ...nextSchemaPart
-      };
+      nextSchema = mergeDeepLeft(nextSchema, nextSchemaPart);
     }
   }
 
   return nextSchema;
+};
+
+const fillRefTemplate = function (templateMap, keyword, value) {
+  if (keyword !== '_ref') {
+    return { [keyword]: value };
+  }
+
+  const values = flatten([value]);
+
+  let nextValue = {};
+  for (const value of values) {
+    if (!templateMap[value]) { continue; }
+
+    nextValue = mergeDeepLeft(nextValue, templateMap[value]);
+  }
+
+  return nextValue;
 };
 
 export function Schema (raw) {
@@ -130,4 +146,39 @@ Schema.prototype.validate = function (data) {
 
 Schema.prototype.walk = function (fn) {
   return walk(this.toModel(), fn);
+};
+
+Schema.process = function (...args) {
+  args = [
+    ...DEFAULT_TEMPLATES,
+    ...flatten(args)
+  ];
+
+  const raws = [];
+  for (const arg of args) {
+    raws.push(new Schema(arg).raw);
+  }
+
+  const templateMap = {};
+  const schemaRaws = [];
+  for (const raw of raws) {
+    if (raw._id) {
+      templateMap[raw._id] = raw;
+      delete templateMap[raw._id]._id;
+      continue;
+    }
+
+    schemaRaws.push(raw);
+  }
+
+  const fillRef = curry(fillRefTemplate)(templateMap);
+  const schemas = [];
+  for (const raw of schemaRaws) {
+    if (!isSchemaObject(raw)) { continue; }
+
+    const nextRaw = walk(raw, fillRef);
+    schemas.push(new Schema(nextRaw));
+  }
+
+  return schemas;
 };

@@ -22,10 +22,12 @@ describe('Schema test', () => {
     expect(new Schema('name').toModel()).to.has.property('type', 'object');
     expect(new Schema([1, 2, 3]).toModel()).to.has.property('type', 'object');
     expect(new Schema({ name: 'foo' }).toModel()).to.has.property('name', 'foo');
+    expect(new Schema({ _name: 'foo' }).toModel()).to.not.has.property('name');
   });
 
   it('should convert to final', async () => {
     const rawSchema = {
+      _hidden: 'hi',
       name: 'foo',
       properties: {
         name: 'string',
@@ -49,7 +51,7 @@ describe('Schema test', () => {
               type: 'text'
             },
             some: null,
-            wrong: 'superidol'
+            wrong: 'superidol',
           }
         }
       }
@@ -57,6 +59,7 @@ describe('Schema test', () => {
 
     const finalSchema = new Schema(rawSchema).toFinal();
 
+    expect(finalSchema._hidden).to.be.eq(undefined);
     expect(path(['properties', 'name', 'type'], finalSchema)).to.be.eq('string');
     expect(path(['properties', 'education', 'properties', 'year', 'type'], finalSchema)).to.be.eq('number');
     expect(path(['properties', 'education', 'properties', 'detail', 'type'], finalSchema)).to.be.eq('string');
@@ -91,5 +94,33 @@ describe('Schema test', () => {
     });
 
     expect(traces).to.has.property('length', 6);
+  });
+
+  it('should template', async () => {
+    const raw1 = {
+      _id: 'something',
+      name: 'foo',
+      properties: {
+        go: 'away'
+      }
+    };
+    
+    const raw2 = {
+      name: 'bar',
+      properties: {
+        go: 'ahead',
+        turn: { _ref: 'something' },
+        skip: { _ref: 'notthing' },
+      },
+      _ref: ['time', 'fs'],
+    };
+    
+    const [ schema ] = Schema.process(new Schema(raw1), [raw2], 0, 1);
+    const schemaRaw = schema.raw;
+
+    expect(path(['properties', 'turn', 'properties', 'go'], schemaRaw)).to.be.eq('away');
+    expect(Object.keys(path(['properties', 'skip'], schemaRaw)).length).to.be.eq(0);
+    expect(path(['properties', 'createdAt', 'default'], schemaRaw)).to.has.property('$now', 'create');
+    expect(path(['properties', 'size'], schemaRaw)).to.be.eq('number');
   });
 });
