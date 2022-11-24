@@ -4,7 +4,7 @@ export const FINAL_KEYWORDS = [
   'type',
   'properties',
   'default',
-  'minumim',
+  'minimum',
   'maximum',
   'exclusiveMinimum',
   'exclusiveMaximum',

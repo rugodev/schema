@@ -1,6 +1,6 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { clone, curry, flatten, mergeDeepLeft } from 'ramda';
+import { clone, curry, flatten, mergeDeepLeft, path } from 'ramda';
 import { DEFAULT_TEMPLATES, FINAL_KEYWORDS, FINAL_TRANSFORMS, FINAL_TYPES } from './constants.js';
 import { ajvError } from '@rugo-vn/exception';
 
@@ -138,7 +138,10 @@ Schema.prototype.validate = function (data) {
   validate(nextData);
 
   if (validate.errors && Array.isArray(validate.errors) && validate.errors.length) {
-    throw ajvError(validate.errors[0]);
+    throw validate.errors.map(raw => {
+      raw.value = path(raw.instancePath.split('/').filter(i => i), data);
+      return ajvError(raw);
+    });
   }
 
   return nextData;
