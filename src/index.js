@@ -102,9 +102,6 @@ export function Schema (raw) {
   if (raw instanceof Schema) return new Schema(raw.raw);
 
   this.raw = clone(raw);
-
-  this.ajv = new Ajv({ removeAdditional: true, useDefaults: true });
-  addFormats(this.ajv);
 }
 
 Schema.prototype.toRaw = function () {
@@ -130,10 +127,16 @@ Schema.prototype.toFinal = function () {
   return finalSchema;
 };
 
-Schema.prototype.validate = function (data) {
+Schema.prototype.validate = function (data, isTransform = true) {
+  const ajv = new Ajv({
+    removeAdditional: true,
+    ...isTransform ? { useDefaults: true } : {}
+  });
+  addFormats(ajv);
+
   const nextData = clone(data);
   const finalSchema = this.toFinal();
-  const validate = this.ajv.compile(finalSchema);
+  const validate = ajv.compile(finalSchema);
 
   validate(nextData);
 
@@ -150,6 +153,8 @@ Schema.prototype.validate = function (data) {
 Schema.prototype.walk = function (fn) {
   return walk(this.toModel(), fn);
 };
+
+Schema.walk = walk;
 
 Schema.process = function (...args) {
   args = [

@@ -74,8 +74,8 @@ describe('Schema test', () => {
     try {
       new Schema({properties: { age: 'number' }}).validate({ age: 'foo' });
       assert.fail('should error');
-    } catch(err) {
-      expect(err).to.has.property('message', 'Document failed validation in operation "type"');
+    } catch(errs) {
+      expect(errs[0]).to.has.property('message', 'Document failed validation in operation "type"');
     }
   });
 
