@@ -43,6 +43,10 @@ const cleanKeyword = function (keyword, value) {
 
   if (keyword === 'type' && FINAL_TYPES.indexOf(value) === -1) { return undefined; }
 
+  if (keyword === 'default' && value && typeof value === 'object' && Object.keys(value).some(v => v[0] === '$')) {
+    return value.$value ? { [keyword]: value.$value } : undefined;
+  }
+
   return { [keyword]: value };
 };
 

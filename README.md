@@ -69,6 +69,7 @@ schema.toFinal();
   + `boolean`
   + `null`
 - Do not allow unknown keywords and types.
+- Functional `default` will be skipped.
 
 ### Model
 

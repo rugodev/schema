@@ -122,5 +122,10 @@ describe('Schema test', () => {
     expect(Object.keys(path(['properties', 'skip'], schemaRaw)).length).to.be.eq(0);
     expect(path(['properties', 'createdAt', 'default'], schemaRaw)).to.has.property('$now', 'create');
     expect(path(['properties', 'size'], schemaRaw)).to.be.eq('number');
+
+    const finalForm = schema.toFinal();
+
+    expect(path(['properties', 'createdAt'], finalForm)).to.not.has.property('default');
+    expect(path(['properties', 'version'], finalForm)).to.has.property('default', 1);
   });
 });
