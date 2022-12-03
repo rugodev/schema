@@ -64,7 +64,7 @@ export const DEFAULT_TEMPLATES = [
       password: 'string',
       apikey: 'string',
       perms: {
-        items: 'object'
+        items: 'json'
       }
     },
     required: ['email']
