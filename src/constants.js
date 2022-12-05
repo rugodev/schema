@@ -83,17 +83,29 @@ export const DEFAULT_TEMPLATES = [
     _id: 'time',
     properties: {
       createdAt: {
-        type: 'string',
-        default: { $now: 'create' }
+        type: 'datetime'
       },
       updatedAt: {
-        type: 'string',
-        default: { $now: 'update' }
+        type: 'datetime'
       },
       version: {
         type: 'number',
-        default: { $value: 1, $inc: 'update' }
+        default: 1
       }
+    }
+  },
+  {
+    _id: 'post',
+    properties: {
+      title: 'string',
+      slug: {
+        type: 'string',
+        default: {
+          fn: 'slugify',
+          from: 'title'
+        }
+      },
+      content: 'string'
     }
   }
 ];

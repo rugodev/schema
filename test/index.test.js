@@ -120,7 +120,6 @@ describe('Schema test', () => {
 
     expect(path(['properties', 'turn', 'properties', 'go'], schemaRaw)).to.be.eq('away');
     expect(Object.keys(path(['properties', 'skip'], schemaRaw)).length).to.be.eq(0);
-    expect(path(['properties', 'createdAt', 'default'], schemaRaw)).to.has.property('$now', 'create');
     expect(path(['properties', 'size'], schemaRaw)).to.be.eq('number');
 
     const finalForm = schema.toFinal();
