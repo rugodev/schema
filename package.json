@@ -19,7 +19,7 @@
     "mocha": "^10.0.0"
   },
   "dependencies": {
-    "@rugo-vn/exception": "../exception",
+    "@rugo-vn/exception": "^1.0.0",
     "ajv": "^8.11.0",
     "ajv-formats": "^2.1.1",
     "ramda": "^0.28.0"
