@@ -133,6 +133,7 @@ Schema.prototype.toFinal = function () {
 
 Schema.prototype.validate = function (data, isTransform = true) {
   const ajv = new Ajv({
+    coerceTypes: true,
     removeAdditional: true,
     ...isTransform ? { useDefaults: true } : {}
   });
