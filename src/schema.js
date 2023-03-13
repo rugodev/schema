@@ -1,7 +1,12 @@
-import { clone, curry, __ } from 'ramda';
 import camelCase from 'camelcase';
+import ObjectPath from 'object-path';
+import { clone } from 'ramda';
 
-import { INVALID_NAMES, VALID_TYPES } from './constants.js';
+import {
+  INVALID_NAMES,
+  VALID_MONGOOSE_ATTRS,
+  VALID_TYPES,
+} from './constants.js';
 
 const throwUnexpectedType = function (name, expected, actual, trackPath) {
   throw new Error(
@@ -35,6 +40,8 @@ const execSchema = function (schema, attrFn, propFn, trackSegments = []) {
 
   // attributes
   for (const attr in schema) {
+    if (PROTOTYPE_ATTRS.indexOf(attr) !== -1) continue;
+
     const value = schema[attr];
     if (value === undefined) continue;
 
@@ -54,7 +61,12 @@ const execSchema = function (schema, attrFn, propFn, trackSegments = []) {
       if (propSchema === undefined) continue;
 
       checkValueType(prop, propSchema, 'object', nextTrackSegs);
-      const nextSchema = propFn(prop, propSchema, nextTrackSegs);
+      const nextSchema = execSchema(
+        propFn(prop, propSchema, nextTrackSegs),
+        attrFn,
+        propFn,
+        [...nextTrackSegs, prop]
+      );
 
       if (nextSchema === undefined) continue;
 
@@ -66,7 +78,10 @@ const execSchema = function (schema, attrFn, propFn, trackSegments = []) {
   // items
   if (result.items) {
     result.type = 'array';
-    result.items = validateSchema(result.items, [...trackSegments, 'items']);
+    result.items = execSchema(result.items, attrFn, propFn, [
+      ...trackSegments,
+      'items',
+    ]);
   }
 
   // type
@@ -117,7 +132,7 @@ const validatePropertyObject = function (prop, schema, segs) {
       `You must not use property name "${prop}" in ${schemaPath}.`
     );
 
-  return validateSchema(schema, [...segs, prop]);
+  return schema;
 };
 
 const validateSchema = (schema, segs) =>
@@ -128,20 +143,82 @@ const validateSchema = (schema, segs) =>
     segs
   );
 
-export function Schema(raw) {
-  if (!(this instanceof Schema)) {
-    return new Schema(raw);
+const transformSchema = (schema, methods) =>
+  execSchema(
+    schema,
+    (attr, value) => {
+      if (methods[attr]) return methods[attr](value);
+      return value;
+    },
+    (_, schema) => {
+      return schema;
+    }
+  );
+
+const toMongoose = (srcSchema) => {
+  const dstSchema = {};
+
+  // attributes
+  for (const attr in srcSchema) {
+    if (VALID_MONGOOSE_ATTRS.indexOf(attr) === -1) continue;
+
+    const value = srcSchema[attr];
+    if (value === undefined) continue;
+
+    dstSchema[attr] = value;
   }
-  if (raw instanceof Schema) return new Schema(raw.raw);
 
+  if (srcSchema.properties) {
+    const nextType = {};
+    for (const prop in srcSchema.properties) {
+      const propSchema = srcSchema.properties[prop];
+      const nextSchema = toMongoose(propSchema);
+
+      if (!nextSchema) continue;
+
+      if (nextSchema.type === 'Array') {
+        const arrSchema = toMongoose(nextSchema.items);
+        nextSchema.type = arrSchema ? [arrSchema] : [];
+        delete nextSchema.items;
+        nextSchema.default ||= undefined;
+      }
+
+      nextType[prop] = nextSchema;
+    }
+    dstSchema.type = nextType;
+  }
+
+  if (dstSchema.type === 'Null') return undefined;
+
+  return dstSchema;
+};
+
+export function Schema(...args) {
+  if (!(this instanceof Schema)) {
+    return new Schema(...args);
+  }
+
+  const raw = args[0];
+  if (raw instanceof Schema) return new Schema(...args);
+
+  // validate schema
   const data = validateSchema(raw);
-
   if (data.type !== 'Object')
     throw new Error(
       `Root schema must be an object, current type is ${data.type}.`
     );
-
   if (!data.name) throw new Error(`Root schema must has attribute "name".`);
 
-  for (let key in data) this[key] = data[key];
+  // transform schema
+  const methods = args[1] || {};
+  const nextData = transformSchema(data, methods);
+
+  // assign result
+  for (let key in nextData) this[key] = nextData[key];
 }
+
+Schema.prototype.toMongoose = function () {
+  return toMongoose(this).type;
+};
+
+const PROTOTYPE_ATTRS = Object.keys(Schema.prototype);

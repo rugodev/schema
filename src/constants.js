@@ -110,6 +110,15 @@ export const DEFAULT_TEMPLATES = [
   },
 ];
 
-export const INVALID_NAMES = ['_id', 'id', 'createdAt', 'updatedAt', 'version'];
+export const INVALID_NAMES = [
+  '_id',
+  'id',
+  'createdAt',
+  'updatedAt',
+  'version',
+  'type',
+];
 
 export const VALID_TYPES = ['string', 'number', 'boolean', 'object', 'array'];
+
+export const VALID_MONGOOSE_ATTRS = ['type', 'items', 'default'];
