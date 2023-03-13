@@ -32,7 +32,7 @@ export const FINAL_KEYWORDS = [
   'then',
   'propertyNames',
   'minProperties',
-  'maxProperties'
+  'maxProperties',
 ];
 
 export const FINAL_TYPES = [
@@ -41,7 +41,7 @@ export const FINAL_TYPES = [
   'object',
   'array',
   'boolean',
-  'null'
+  'null',
 ];
 
 export const FINAL_TRANSFORMS = [
@@ -50,7 +50,7 @@ export const FINAL_TRANSFORMS = [
   [{ type: 'code' }, { type: 'string' }],
   [{ type: 'relation' }, { type: 'string' }],
   [{ type: 'file' }, { type: 'string' }],
-  [{ type: 'json' }, { type: 'object', properties: {} }]
+  [{ type: 'json' }, { type: 'object', properties: {} }],
 ];
 
 export const DEFAULT_TEMPLATES = [
@@ -64,10 +64,10 @@ export const DEFAULT_TEMPLATES = [
       password: 'string',
       apikey: 'string',
       perms: {
-        items: 'json'
-      }
+        items: 'json',
+      },
     },
-    required: ['email']
+    required: ['email'],
   },
   {
     _id: 'fs',
@@ -76,23 +76,23 @@ export const DEFAULT_TEMPLATES = [
       name: 'string',
       mime: 'string',
       parent: 'relation',
-      size: 'number'
-    }
+      size: 'number',
+    },
   },
   {
     _id: 'time',
     properties: {
       createdAt: {
-        type: 'datetime'
+        type: 'datetime',
       },
       updatedAt: {
-        type: 'datetime'
+        type: 'datetime',
       },
       version: {
         type: 'number',
-        default: 1
-      }
-    }
+        default: 1,
+      },
+    },
   },
   {
     _id: 'post',
@@ -102,10 +102,14 @@ export const DEFAULT_TEMPLATES = [
         type: 'string',
         default: {
           fn: 'slugify',
-          from: 'title'
-        }
+          from: 'title',
+        },
       },
-      content: 'string'
-    }
-  }
+      content: 'string',
+    },
+  },
 ];
+
+export const INVALID_NAMES = ['_id', 'id', 'createdAt', 'updatedAt', 'version'];
+
+export const VALID_TYPES = ['string', 'number', 'boolean', 'object', 'array'];
