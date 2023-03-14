@@ -14,7 +14,6 @@
     "c8": "^7.11.2",
     "dotenv": "^16.0.1",
     "mocha": "^10.0.0",
-    "mongoose": "^7.0.1",
     "mongodb-memory-server": "^8.5.2"
   },
   "dependencies": {
@@ -23,7 +22,8 @@
     "ajv-formats": "^2.1.1",
     "camelcase": "^7.0.1",
     "object-path": "^0.11.8",
-    "ramda": "^0.28.0"
+    "ramda": "^0.28.0",
+    "mongoose": "^7.0.1"
   },
   "keywords": [],
   "author": "",

@@ -1,6 +1,6 @@
 import camelCase from 'camelcase';
-import ObjectPath from 'object-path';
 import { clone } from 'ramda';
+import { Schema as MongooseSchema } from 'mongoose';
 
 import {
   INVALID_NAMES,
@@ -189,6 +189,8 @@ const toMongoose = (srcSchema) => {
   }
 
   if (dstSchema.type === 'Null') return undefined;
+  if (dstSchema.type === 'Id') dstSchema.type = 'ObjectId';
+  dstSchema._id = false;
 
   return dstSchema;
 };
@@ -218,7 +220,27 @@ export function Schema(...args) {
 }
 
 Schema.prototype.toMongoose = function () {
-  return toMongoose(this).type;
+  return new MongooseSchema(toMongoose(this).type, {
+    timestamps: true,
+    versionKey: 'version',
+  });
+};
+
+Schema.prototype.clone = function () {
+  const obj = {};
+  for (const attr in this) {
+    if (PROTOTYPE_ATTRS.indexOf(attr) !== -1) continue;
+
+    obj[attr] = clone(this[attr]);
+  }
+
+  return obj;
+};
+
+Schema.prototype.toJSON = function (format = false) {
+  return format
+    ? JSON.stringify(this.clone(), 0, 2)
+    : JSON.stringify(this.clone());
 };
 
 const PROTOTYPE_ATTRS = Object.keys(Schema.prototype);

@@ -1,187 +1,236 @@
 /* eslint-disable */
 
+import { createConnection, Schema as MongooseSchema } from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 import { assert, expect } from 'chai';
-import { path } from 'ramda';
-import { extractSchema, Schema } from '../src/index.js';
+import { Schema } from '../src/schema.js';
 
-describe('Schema test', () => {
-  it('should to create a schema', async () => {
-    expect(Schema().toRaw()).to.be.eq(undefined);
-    expect(new Schema(new Schema()).toRaw()).to.be.eq(undefined);
-    expect(new Schema(123).toRaw()).to.be.eq(123);
-
-    const obj = { name: 'foo' };
-    expect(new Schema(obj).toRaw()).to.be.not.eq(obj);
-    expect(new Schema(obj).toRaw()).to.has.property('name', 'foo');
-  });
-
-  it('should convert to model', async () => {
-    expect(new Schema().toModel()).to.has.property('type', 'object');
-    expect(new Schema(null).toModel()).to.has.property('type', 'object');
-    expect(new Schema(0).toModel()).to.has.property('type', 'object');
-    expect(new Schema('name').toModel()).to.has.property('type', 'object');
-    expect(new Schema([1, 2, 3]).toModel()).to.has.property('type', 'object');
-    expect(new Schema({ name: 'foo' }).toModel()).to.has.property(
-      'name',
-      'foo'
-    );
-    expect(new Schema({ _name: 'foo' }).toModel()).to.not.has.property('name');
-  });
-
-  it('should convert to final', async () => {
-    const rawSchema = {
-      _hidden: 'hi',
-      name: 'foo',
-      properties: {
-        name: 'string',
-        age: 'number',
-        parent: {
-          type: 'array',
-          items: {
-            properties: {
-              name: 'string',
-            },
-          },
-        },
-        education: {
-          properties: {
-            school: {
-              type: 'string',
-              pattern: 'abc.*',
-            },
-            year: 'number',
-            detail: {
-              type: 'text',
-            },
-            some: null,
-            wrong: 'superidol',
-          },
+const COMPLEX_SCHEMA = {
+  name: 'PeOpLe',
+  abc: 'Def',
+  ghi: 123,
+  jkl: true,
+  mno: false,
+  pqr: undefined,
+  properties: {
+    name: { type: 'string', maxlength: 12, minlength: 13 },
+    pets: {
+      type: 'array',
+      items: {
+        properties: {
+          name: { type: 'string' },
+          kind: { type: 'string' },
+          age: { type: 'number' },
+          more: { type: 'object' },
+          tags: { type: 'array' },
+          joys: { type: 'array', default: [] },
         },
       },
-    };
+    },
+    non: undefined,
+  },
+};
 
-    const finalSchema = new Schema(rawSchema).toFinal();
+const DB_NAME = 'test';
 
-    expect(finalSchema._hidden).to.be.eq(undefined);
-    expect(path(['properties', 'name', 'type'], finalSchema)).to.be.eq(
-      'string'
-    );
-    expect(
-      path(
-        ['properties', 'education', 'properties', 'year', 'type'],
-        finalSchema
-      )
-    ).to.be.eq('number');
-    expect(
-      path(
-        ['properties', 'education', 'properties', 'detail', 'type'],
-        finalSchema
-      )
-    ).to.be.eq('string');
-    expect(
-      path(
-        ['properties', 'education', 'properties', 'school', 'pattern'],
-        finalSchema
-      )
-    ).to.be.eq('abc.*');
+describe('Rugo Schema test', () => {
+  let mongod;
+  let conn;
+
+  before(async () => {
+    // mongo
+    mongod = await MongoMemoryServer.create({
+      instance: {
+        dbName: DB_NAME,
+      },
+    });
+
+    conn = await createConnection(mongod.getUri()).asPromise();
   });
 
-  it('should validate data', async () => {
-    expect(
-      new Schema({ properties: { name: 'string' } }).validate({ name: 'foo' })
-    ).to.has.property('name', 'foo');
-    expect(
-      new Schema({ properties: { name: {} } }).validate({ name: 'foo' })
-    ).to.has.property('name', 'foo');
-    expect(
-      new Schema({ properties: {} }).validate({ name: 'foo' })
-    ).to.has.property('name', 'foo');
+  after(async () => {
+    await conn.close();
+    await mongod.stop();
+  });
 
+  it('should validate schema before create: name ', async () => {
+    // invalid name
     try {
-      new Schema({ properties: { age: 'number' } }).validate({ age: 'foo' });
-      assert.fail('should error');
-    } catch (errs) {
-      expect(errs[0]).to.has.property(
+      new Schema({ name: true });
+      assert.fail('should throw error');
+    } catch (err) {
+      expect(err).to.has.property(
         'message',
-        'Document failed validation in operation "type"'
+        'Invalid type (boolean) of attribute "name" (should be string) in root.'
+      );
+    }
+
+    // invalid schema
+    try {
+      new Schema({ name: 'abc' });
+      assert.fail('should throw error');
+    } catch (err) {
+      expect(err).to.has.property(
+        'message',
+        'Root schema must be an object, current type is Null.'
+      );
+    }
+
+    // required name
+    try {
+      new Schema({ type: 'Object' });
+      assert.fail('should throw error');
+    } catch (err) {
+      expect(err).to.has.property(
+        'message',
+        'Root schema must has attribute "name".'
+      );
+    }
+
+    // invalid property
+    try {
+      Schema({ properties: { name: false } });
+      assert.fail('should throw error');
+    } catch (err) {
+      expect(err).to.has.property(
+        'message',
+        'Invalid type (boolean) of attribute "name" (should be object) in properties.'
+      );
+    }
+
+    // invalid property
+    try {
+      Schema({ properties: { name: { type: null } } });
+      assert.fail('should throw error');
+    } catch (err) {
+      expect(err).to.has.property(
+        'message',
+        'Invalid type (null) of attribute "type" (should be string) in properties.name.'
+      );
+    }
+
+    // invalid property type
+    try {
+      Schema({ properties: { name: { type: 'mytype' } } });
+      assert.fail('should throw error');
+    } catch (err) {
+      expect(err).to.has.property(
+        'message',
+        'Invalid type "mytype" in properties.name.'
+      );
+    }
+
+    // invalid nested property
+    try {
+      new Schema({ properties: { name: { type: [] } } });
+      assert.fail('should throw error');
+    } catch (err) {
+      expect(err).to.has.property(
+        'message',
+        'Invalid type (array) of attribute "type" (should be string) in properties.name.'
+      );
+    }
+
+    // invalid property name
+    try {
+      new Schema({ properties: { id: { type: 'string' } } });
+      assert.fail('should throw error');
+    } catch (err) {
+      expect(err).to.has.property(
+        'message',
+        'You must not use property name "id" in properties.'
       );
     }
   });
 
-  it('should walk', async () => {
-    const traces = [];
+  it('should create a schema', async () => {
+    const schema = new Schema(COMPLEX_SCHEMA);
 
-    new Schema({
+    // console.log(JSON.stringify(schema, 0, 2));
+
+    expect(schema).to.has.property('name', 'people');
+    expect(schema).to.has.property('abc', 'Def');
+    expect(schema).to.has.property('ghi', 123);
+    expect(schema).to.has.property('jkl', true);
+    expect(schema).not.to.has.property('pqr');
+    expect(schema.properties.pets.items.properties.name).to.has.property(
+      'type',
+      'String'
+    );
+
+    expect(schema.properties.pets.items.properties.tags).to.has.property(
+      'items'
+    );
+  });
+
+  it('should manipulate schema', async () => {
+    const schema = new Schema(
+      {
+        name: 'persons',
+        properties: {
+          link: { type: 'Object', ref: 'gogo' },
+          slug: { type: 'String', default: 'somevalue' },
+        },
+      },
+      {
+        name: (val) => `prefix.${val}`,
+        ref: (val) => `newPrefix.${val}`,
+        default: () => undefined,
+      }
+    );
+
+    expect(schema).to.has.property('name', 'prefix.persons');
+    expect(schema.properties.link).to.has.property('ref', 'newPrefix.gogo');
+  });
+
+  it('should convert to mongoose schema', async () => {
+    const schema = new Schema(COMPLEX_SCHEMA);
+
+    const mongooseSchema = schema.toMongoose();
+    // console.log(JSON.stringify(mongooseSchema, 0, 2));
+
+    const Model = conn.model(
+      schema.name,
+      MongooseSchema(mongooseSchema),
+      schema.name
+    );
+
+    const doc = await Model.create({
       name: 'abc',
-      driver: 'def',
-      properties: {
-        link: { type: 'relation', ref: 'ghi' },
-      },
-    }).walk((keyword, value, t) => {
-      traces.push(t);
-      return { [keyword]: value };
+      pets: [{ name: 'Foo', age: 12 }],
     });
 
-    expect(traces).to.has.property('length', 6);
+    // console.log(doc);
+
+    expect(doc.pets[0]).to.has.property('joys');
   });
 
-  it('should template', async () => {
-    const raw1 = {
-      _id: 'something',
-      name: 'foo',
+  it("should user's schema", async () => {
+    const keySchema = new Schema({
+      name: '_keys',
       properties: {
-        go: 'away',
+        data: { type: 'String' },
+        hash: { type: 'String' },
+        prev: { type: 'Id', ref: '_keys' },
       },
-    };
-
-    const raw2 = {
-      name: 'bar',
-      properties: {
-        go: 'ahead',
-        turn: { _ref: 'something' },
-        skip: { _ref: 'notthing' },
-      },
-      _ref: ['time', 'fs'],
-    };
-
-    const [schema] = Schema.process(new Schema(raw1), [raw2], 0, 1);
-    const schemaRaw = schema.raw;
-
-    expect(
-      path(['properties', 'turn', 'properties', 'go'], schemaRaw)
-    ).to.be.eq('away');
-    expect(
-      Object.keys(path(['properties', 'skip'], schemaRaw)).length
-    ).to.be.eq(0);
-    expect(path(['properties', 'size'], schemaRaw)).to.be.eq('number');
-
-    const finalForm = schema.toFinal();
-
-    expect(path(['properties', 'createdAt'], finalForm)).to.not.has.property(
-      'default'
-    );
-    expect(path(['properties', 'version'], finalForm)).to.has.property(
-      'default',
-      1
-    );
-  });
-
-  it('should extract from raw schema', async () => {
-    const [config, schema] = extractSchema({
-      _name: 'ok',
-      _type: 'la',
-      you: 'are',
-      be: 'ty',
     });
 
-    expect(config).to.has.property('name', 'ok');
-    expect(config).to.has.property('type', 'la');
-    expect(schema).to.has.property('you', 'are');
-    expect(schema).to.has.property('be', 'ty');
+    const userSchema = new Schema({
+      name: 'users',
+      properties: {
+        email: { type: 'String', required: true, unique: true },
+        credentials: {
+          type: 'Array',
+          items: {
+            properties: {
+              key: { type: 'Id', ref: '_keys' },
+              perms: { type: 'Object' },
+            },
+          },
+        },
+      },
+    });
 
-    expect(schema).not.to.has.property('name');
-    expect(schema).not.to.has.property('type');
-    expect(config).not.to.has.property('you');
-    expect(config).not.to.has.property('be');
+    expect(userSchema.toMongoose() instanceof MongooseSchema).to.be.eq(true);
   });
 });

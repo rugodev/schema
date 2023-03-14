@@ -119,6 +119,20 @@ export const INVALID_NAMES = [
   'type',
 ];
 
-export const VALID_TYPES = ['string', 'number', 'boolean', 'object', 'array'];
+export const VALID_TYPES = [
+  'string',
+  'number',
+  'boolean',
+  'object',
+  'array',
+  'id',
+  'date',
+];
 
-export const VALID_MONGOOSE_ATTRS = ['type', 'items', 'default'];
+export const VALID_MONGOOSE_ATTRS = [
+  'type',
+  'items',
+  'default',
+  'required',
+  'unique',
+];
