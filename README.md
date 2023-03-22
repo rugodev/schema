@@ -11,6 +11,7 @@ Inspired of JSON Schema, it shoule be:
 ```js
 const schema = new Schema({
   name: /* tableName, name of schema, use for naming collection */,
+  icon: /* icon name of table */,
   /* other custom attributes */,
   type: 'Object', /* by default, it is an object */,
   properties: {
@@ -48,6 +49,11 @@ It will throws an error if meet invalid schema.
 All types should be write in PascalCase.
 
 **`Object`**
+
+**`Id`**
+
+- `ref` the name of table that you want to link.
+- `lookup` the property of row that you want to show when linked.
 
 ## Handles
 
