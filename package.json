@@ -1,6 +1,6 @@
 {
   "name": "@rugo-vn/schema",
-  "version": "1.0.1-beta.2",
+  "version": "1.0.1",
   "description": "Validate and format data.",
   "main": "src/index.js",
   "type": "module",
