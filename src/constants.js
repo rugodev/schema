@@ -135,4 +135,10 @@ export const VALID_MONGOOSE_ATTRS = [
   'default',
   'required',
   'unique',
+  'min',
+  'max',
+  'enum',
+  'match',
+  'minLength',
+  'maxLength',
 ];

@@ -1,6 +1,6 @@
 {
   "name": "@rugo-vn/schema",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Validate and format data.",
   "main": "src/index.js",
   "type": "module",
@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "c8": "^7.11.2",
+    "chai": "^4.3.7",
     "dotenv": "^16.0.1",
     "mocha": "^10.0.0",
     "mongodb-memory-server": "^8.5.2"
@@ -21,9 +22,9 @@
     "ajv": "^8.11.0",
     "ajv-formats": "^2.1.1",
     "camelcase": "^7.0.1",
+    "mongoose": "^7.0.1",
     "object-path": "^0.11.8",
-    "ramda": "^0.28.0",
-    "mongoose": "^7.0.1"
+    "ramda": "^0.28.0"
   },
   "keywords": [],
   "author": "",
